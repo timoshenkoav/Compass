@@ -5,26 +5,23 @@ import android.location.Location
 import androidx.lifecycle.ViewModel
 import io.reactivex.subjects.PublishSubject
 
-
+data class UserData(val azimuth: Double, val location: Location)
 class MainViewModel : ViewModel() {
     private val DEGREES_360 = 360
     val targetLocation = Location("").apply {
         longitude = 0.0
         latitude = 0.0
     }
-    val userLocation = Location("").apply {
-        longitude = 0.0
-        latitude = 0.0
-    }
 
-    fun valueUpdated(it: Double) {
+
+    fun valueUpdated(it: UserData) {
         val geomagneticField = GeomagneticField(
-            userLocation.latitude.toFloat(),
-            userLocation.longitude.toFloat(),
-            userLocation.altitude.toFloat(), System.currentTimeMillis()
+            it.location.latitude.toFloat(),
+            it.location.longitude.toFloat(),
+            it.location.altitude.toFloat(), System.currentTimeMillis()
         )
-        val azimuth = it - geomagneticField.declination
-        var bearTo = userLocation.bearingTo(targetLocation)
+        val azimuth = it.azimuth - geomagneticField.declination
+        var bearTo = it.location.bearingTo(targetLocation)
         if (bearTo < 0) bearTo += DEGREES_360
 
         var rotation = bearTo - azimuth
