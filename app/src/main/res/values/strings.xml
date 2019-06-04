@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Compass</string>
+    <string name="invalid_value">Invalid value</string>
+    <string name="update">Update</string>
+    <string name="longitude">Longitude</string>
+    <string name="latitude">Latitude</string>
 </resources>

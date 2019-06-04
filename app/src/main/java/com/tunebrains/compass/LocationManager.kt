@@ -6,18 +6,20 @@ import android.location.Location
 import android.os.Looper
 import com.google.android.gms.location.*
 import io.reactivex.subjects.BehaviorSubject
+import java.lang.ref.SoftReference
 import java.util.concurrent.TimeUnit
 
 
 class LocationManager(ctx: Context) {
-    val locationEvents = BehaviorSubject.create<Location>()
-    private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(ctx)
-
     companion object {
         private const val TWO_MINUTES: Long = 1000 * 60 * 2
     }
 
-    fun isBetterLocation(location: Location, currentBestLocation: Location?): Boolean {
+    val locationEvents = BehaviorSubject.create<Location>()
+
+    private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(ctx)
+
+    private fun isBetterLocation(location: Location, currentBestLocation: Location?): Boolean {
         if (currentBestLocation == null) {
             // A new location is always better than no location
             return true
@@ -55,7 +57,7 @@ class LocationManager(ctx: Context) {
         }
     }
 
-    val clb = object : LocationCallback() {
+    private val clb = object : LocationCallback() {
         var bestKnown: Location? = null
         override fun onLocationResult(locationResult: LocationResult?) {
             super.onLocationResult(locationResult)
@@ -75,12 +77,8 @@ class LocationManager(ctx: Context) {
 
 
         }
-
-        override fun onLocationAvailability(p0: LocationAvailability?) {
-            super.onLocationAvailability(p0)
-        }
     }
-
+    private val softClb = LocationCallbackReference(clb)
     @SuppressLint("MissingPermission")
     fun start() {
 
@@ -89,12 +87,29 @@ class LocationManager(ctx: Context) {
             interval = TimeUnit.SECONDS.toMillis(10)
         }
 
-        fusedLocationClient.requestLocationUpdates(request, clb, Looper.getMainLooper())
+        fusedLocationClient.requestLocationUpdates(request, softClb, Looper.getMainLooper())
     }
 
     @SuppressLint("MissingPermission")
     fun stop() {
 
-        fusedLocationClient.removeLocationUpdates(clb)
+        fusedLocationClient.removeLocationUpdates(softClb)
+    }
+
+    class LocationCallbackReference(locationCallback: LocationCallback) : LocationCallback() {
+
+        private val mLocationCallbackRef: SoftReference<LocationCallback> = SoftReference(locationCallback)
+
+        override fun onLocationResult(locationResult: LocationResult?) {
+            super.onLocationResult(locationResult)
+            val value = mLocationCallbackRef.get()
+            value?.onLocationResult(locationResult)
+        }
+
+        override fun onLocationAvailability(locationAvailability: LocationAvailability?) {
+            super.onLocationAvailability(locationAvailability)
+            val value = mLocationCallbackRef.get()
+            value?.onLocationAvailability(locationAvailability)
+        }
     }
 }

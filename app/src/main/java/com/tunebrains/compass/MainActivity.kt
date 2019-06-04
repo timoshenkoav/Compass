@@ -3,7 +3,6 @@ package com.tunebrains.compass
 import android.Manifest
 import android.location.Location
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProviders
 import com.tbruyelle.rxpermissions2.RxPermissions
@@ -15,11 +14,26 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
-    lateinit var vm: MainViewModel
-    private var compositeDisposable = CompositeDisposable()
+    private lateinit var vm: MainViewModel
     private lateinit var sensorManager: CompassSensorManager
-    val rxPermissions = RxPermissions(this)
     private lateinit var locationManager: LocationManager
+    private var compositeDisposable = CompositeDisposable()
+    private val rxPermissions = RxPermissions(this)
+
+    private fun isValidLng(lng: Double): Boolean {
+        if (lng < -180 || lng > 180) {
+            return false
+        }
+        return true
+    }
+
+    private fun isValidLat(lat: Double): Boolean {
+        if (lat < -90 || lat > 90) {
+            return false;
+        }
+        return true
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -27,11 +41,24 @@ class MainActivity : AppCompatActivity() {
         sensorManager = CompassSensorManager(this.applicationContext)
         locationManager = LocationManager(this.applicationContext)
         lifecycle.addObserver(sensorManager)
+        updateTarget.setOnClickListener {
+            val longitude = edLongitude.text.toString().toDoubleOrNull()
+            if (longitude == null || !isValidLng(longitude)) {
+                edLongitude.error = getString(R.string.invalid_value)
+                return@setOnClickListener
+            }
+            val latitide = edLatitude.text.toString().toDoubleOrNull()
+            if (latitide == null || !isValidLat(latitide)) {
+                edLatitude.error = getString(R.string.invalid_value)
+                return@setOnClickListener
+            }
+            vm.updateTarget(latitide, longitude)
+        }
     }
+
 
     override fun onResume() {
         super.onResume()
-
 
         compositeDisposable.add(
             rxPermissions.request(
@@ -50,17 +77,10 @@ class MainActivity : AppCompatActivity() {
                 BiFunction<Double, Location, UserData> { azimuth, location ->
                     UserData(azimuth, location)
                 }).subscribe {
-                Log.d("MainActivity", "New Data: $it")
                 vm.valueUpdated(it)
             })
-        compositeDisposable.add(sensorManager.azimuthObserver.subscribe({
 
-
-        }, {
-
-        }))
         compositeDisposable.add(vm.degreeObserver.observeOn(AndroidSchedulers.mainThread()).subscribe({
-            Log.d("MainActivity", "New degree: $it")
             compass.updateDegree(it)
         }, {
 
@@ -74,6 +94,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        lifecycle.removeObserver(sensorManager)
         compositeDisposable.dispose()
         super.onDestroy()
     }

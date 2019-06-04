@@ -42,13 +42,13 @@ class CompassSensorManager(ctx: Context) : LifecycleObserver, SensorEventListene
 
     private val windowManager = ctx.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private val sensorManager = ctx.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-    private val accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-    private val magneticFieldSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+    private val accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+    private val magneticFieldSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
 
     @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
     fun start() {
-        sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME)
-        sensorManager.registerListener(this, magneticFieldSensor, SensorManager.SENSOR_DELAY_GAME)
+        sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_UI)
+        sensorManager.registerListener(this, magneticFieldSensor, SensorManager.SENSOR_DELAY_UI)
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)

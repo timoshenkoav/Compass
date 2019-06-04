@@ -7,12 +7,31 @@ import io.reactivex.subjects.PublishSubject
 
 data class UserData(val azimuth: Double, val location: Location)
 class MainViewModel : ViewModel() {
-    private val DEGREES_360 = 360
-    val targetLocation = Location("").apply {
-        longitude = 0.0
-        latitude = 0.0
+    val degreeObserver = PublishSubject.create<Float>()
+
+    companion object {
+        private const val DEGREES_360 = 360
     }
 
+    private var oldValue = 0f
+    private val targetLocation = Location("").apply {
+        longitude = 0.0
+        latitude = 90.0
+    }
+
+    private fun lowPassFilter(rawValue: Float): Float {
+        val alpha = 0.95f
+        val filteredValue = alpha * oldValue + (1.0f - alpha) * rawValue;
+
+        return filteredValue;
+    }
+
+    fun updateTarget(latitude: Double, longitude: Double) {
+        synchronized(this) {
+            targetLocation.longitude = longitude
+            targetLocation.latitude = latitude
+        }
+    }
 
     fun valueUpdated(it: UserData) {
         val geomagneticField = GeomagneticField(
@@ -21,13 +40,19 @@ class MainViewModel : ViewModel() {
             it.location.altitude.toFloat(), System.currentTimeMillis()
         )
         val azimuth = it.azimuth - geomagneticField.declination
-        var bearTo = it.location.bearingTo(targetLocation)
+
+        var bearTo = synchronized(targetLocation) {
+            it.location.bearingTo(targetLocation)
+        }
         if (bearTo < 0) bearTo += DEGREES_360
 
         var rotation = bearTo - azimuth
+
         if (rotation < 0) rotation += DEGREES_360
-        degreeObserver.onNext(rotation.toFloat())
+        oldValue = lowPassFilter(rotation.toFloat())
+        degreeObserver.onNext(oldValue)
+
     }
 
-    val degreeObserver = PublishSubject.create<Float>()
+
 }
