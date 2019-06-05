@@ -47,12 +47,12 @@ class MainActivity : AppCompatActivity() {
                 edLongitude.error = getString(R.string.invalid_value)
                 return@setOnClickListener
             }
-            val latitide = edLatitude.text.toString().toDoubleOrNull()
-            if (latitide == null || !isValidLat(latitide)) {
+            val latitude = edLatitude.text.toString().toDoubleOrNull()
+            if (latitude == null || !isValidLat(latitude)) {
                 edLatitude.error = getString(R.string.invalid_value)
                 return@setOnClickListener
             }
-            vm.updateTarget(latitide, longitude)
+            vm.updateTarget(latitude, longitude)
         }
     }
 
