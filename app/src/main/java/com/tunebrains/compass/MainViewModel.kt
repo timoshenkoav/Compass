@@ -11,19 +11,20 @@ class MainViewModel : ViewModel() {
 
     companion object {
         private const val DEGREES_360 = 360
+        private val NORTH_POLE = Location("").apply {
+            longitude = 0.0
+            latitude = 90.0
+        }
     }
 
     private var oldValue = 0f
-    private val targetLocation = Location("").apply {
-        longitude = 0.0
-        latitude = 90.0
-    }
+    private val targetLocation = NORTH_POLE
 
     private fun lowPassFilter(rawValue: Float): Float {
         val alpha = 0.95f
-        val filteredValue = alpha * oldValue + (1.0f - alpha) * rawValue;
+        val filteredValue = alpha * oldValue + (1.0f - alpha) * rawValue
 
-        return filteredValue;
+        return filteredValue
     }
 
     fun updateTarget(latitude: Double, longitude: Double) {
