@@ -22,9 +22,8 @@ class MainViewModel : ViewModel() {
 
     private fun lowPassFilter(rawValue: Float): Float {
         val alpha = 0.95f
-        val filteredValue = alpha * oldValue + (1.0f - alpha) * rawValue
 
-        return filteredValue
+        return alpha * oldValue + (1.0f - alpha) * rawValue
     }
 
     fun updateTarget(latitude: Double, longitude: Double) {

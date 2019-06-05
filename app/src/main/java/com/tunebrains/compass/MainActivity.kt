@@ -29,7 +29,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun isValidLat(lat: Double): Boolean {
         if (lat < -90 || lat > 90) {
-            return false;
+            return false
         }
         return true
     }
